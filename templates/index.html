@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeoBank</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="app">
+
+  <!-- ── AUTH ── -->
+  <div class="auth-screen" id="auth-screen">
+    <div class="auth-box">
+      <div class="logo">
+        <div class="logo-mark">
+          <div class="logo-icon">◈</div>
+          <div class="logo-name">Neo<span>Bank</span></div>
+        </div>
+        <div class="logo-sub">Premium Virtual Banking</div>
+      </div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchAuth('login')">Sign In</div>
+        <div class="auth-tab" onclick="switchAuth('register')">Open Account</div>
+      </div>
+
+      <!-- Login -->
+      <div class="auth-panel active" id="panel-login">
+        <div class="field">
+          <label>Username or Account ID</label>
+          <input type="text" id="login-id" placeholder="@username or NEO-XXXXXX" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label>PIN</label>
+          <input type="password" id="login-pin" placeholder="4-digit PIN" maxlength="4"/>
+        </div>
+        <div class="err" id="login-err"></div>
+        <button class="btn-primary" onclick="login()">Sign In</button>
+      </div>
+
+      <!-- Register -->
+      <div class="auth-panel" id="panel-register">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" placeholder="Your full name"/>
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="e.g. dabeer_khan" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label>Opening Balance ($)</label>
+          <input type="number" id="reg-balance" placeholder="e.g. 1000" min="0"/>
+        </div>
+        <div class="field">
+          <label>4-Digit PIN</label>
+          <input type="password" id="reg-pin" placeholder="Choose a secure PIN" maxlength="4"/>
+        </div>
+        <div class="err" id="reg-err"></div>
+        <button class="btn-primary" onclick="register()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="dashboard" id="dashboard">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-logo">Neo<span>Bank</span></div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">D</div>
+          <div>
+            <div class="user-name" id="user-name">—</div>
+            <div class="user-handle" id="user-handle">—</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+
+      <!-- Balance Card -->
+      <div class="balance-card">
+        <div class="balance-top">
+          <div class="balance-label">Available Balance</div>
+          <div class="balance-id" id="balance-id">—</div>
+        </div>
+        <div class="balance-amount">
+          <span class="balance-currency">$</span>
+          <span id="balance-val">0.00</span>
+        </div>
+        <div class="balance-change">Your total account balance</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <div class="action-btn" onclick="openModal('deposit')">
+          <div class="action-icon deposit">↓</div>
+          <div class="action-label">Deposit</div>
+        </div>
+        <div class="action-btn" onclick="openModal('withdraw')">
+          <div class="action-icon withdraw">↑</div>
+          <div class="action-label">Withdraw</div>
+        </div>
+        <div class="action-btn" onclick="openModal('transfer')">
+          <div class="action-icon transfer">⇄</div>
+          <div class="action-label">Transfer</div>
+        </div>
+        <div class="action-btn" onclick="loadTransactions(); loadAnalytics()">
+          <div class="action-icon refresh">↺</div>
+          <div class="action-label">Refresh</div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="dashboard-grid">
+
+        <!-- Transactions -->
+        <div class="section-card">
+          <div class="section-title">Recent Transactions</div>
+          <div class="txn-list" id="txn-list">
+            <div class="empty-state">No transactions yet</div>
+          </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="section-card">
+          <div class="section-title">Spending Analytics</div>
+          <div class="analytics-stats">
+            <div class="stat-box">
+              <div class="lbl">Total Income</div>
+              <div class="val income" id="analytics-income">$0.00</div>
+            </div>
+            <div class="stat-box">
+              <div class="lbl">Total Expenses</div>
+              <div class="val expenses" id="analytics-expenses">$0.00</div>
+            </div>
+            <div class="stat-box" style="grid-column:1/-1">
+              <div class="lbl">Transactions</div>
+              <div class="val" id="analytics-txn-count">0</div>
+            </div>
+          </div>
+          <div class="chart-bars" id="analytics-bars">
+            <div style="color:var(--muted);font-size:0.82rem">No spending data yet</div>
+          </div>
+        </div>
+
+        <!-- Financial Tools -->
+        <div class="section-card full">
+          <div class="section-title">Financial Tools</div>
+
+          <div class="tools-tabs">
+            <div class="tool-tab active" onclick="switchTool('currency')">💱 Currency Converter</div>
+            <div class="tool-tab" onclick="switchTool('stock')">📈 Stock Lookup</div>
+            <div class="tool-tab" onclick="switchTool('loan')">🏦 Loan Calculator</div>
+          </div>
+
+          <!-- Currency Converter -->
+          <div class="tool-panel active" id="tool-currency">
+            <div class="tool-row">
+              <div class="field">
+                <label>Amount</label>
+                <input type="number" id="curr-amount" placeholder="e.g. 100" min="0"/>
+              </div>
+              <div class="field">
+                <label>From</label>
+                <select id="curr-from">
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="PKR">PKR — Pakistani Rupee</option>
+                  <option value="AED">AED — UAE Dirham</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="CHF">CHF — Swiss Franc</option>
+                  <option value="CNY">CNY — Chinese Yuan</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                  <option value="SAR">SAR — Saudi Riyal</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>To</label>
+                <select id="curr-to">
+                  <option value="PKR">PKR — Pakistani Rupee</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="AED">AED — UAE Dirham</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="CHF">CHF — Swiss Franc</option>
+                  <option value="CNY">CNY — Chinese Yuan</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                  <option value="SAR">SAR — Saudi Riyal</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-tool" onclick="convertCurrency()">Convert Currency</button>
+            <div class="tool-result" id="currency-result">
+              <div class="result-main" id="curr-result-main"></div>
+              <div class="result-sub"  id="curr-result-sub"></div>
+            </div>
+          </div>
+
+          <!-- Stock Lookup -->
+          <div class="tool-panel" id="tool-stock">
+            <div class="tool-row">
+              <div class="field">
+                <label>Stock Ticker</label>
+                <input type="text" id="stock-ticker" placeholder="e.g. AAPL, TSLA, MSFT" style="text-transform:uppercase"/>
+              </div>
+            </div>
+            <button class="btn-tool" id="stock-btn" onclick="lookupStock()">Look Up</button>
+            <div class="tool-result" id="stock-result">
+              <div class="result-main" id="stock-result-main"></div>
+              <div class="result-sub"  id="stock-result-sub"></div>
+              <div class="result-grid" id="stock-result-grid"></div>
+            </div>
+          </div>
+
+          <!-- Loan Calculator -->
+          <div class="tool-panel" id="tool-loan">
+            <div class="tool-row">
+              <div class="field">
+                <label>Loan Amount ($)</label>
+                <input type="number" id="loan-amount" placeholder="e.g. 10000" min="0"/>
+              </div>
+              <div class="field">
+                <label>Annual Interest Rate (%)</label>
+                <input type="number" id="loan-rate" placeholder="e.g. 5.5" min="0" step="0.1"/>
+              </div>
+              <div class="field">
+                <label>Term (months)</label>
+                <input type="number" id="loan-months" placeholder="e.g. 24" min="1"/>
+              </div>
+            </div>
+            <button class="btn-tool" onclick="calculateLoan()">Calculate Loan</button>
+            <div class="tool-result" id="loan-result">
+              <div class="result-main" id="loan-result-main"></div>
+              <div class="result-sub"  id="loan-result-sub"></div>
+              <div class="loan-schedule">
+                <table class="loan-table">
+                  <thead><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
+                  <tbody id="loan-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL ── -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">Deposit</div>
+      <div class="field">
+        <label>Amount ($)</label>
+        <input type="number" id="modal-amount" placeholder="Enter amount" min="0.01" step="0.01"/>
+      </div>
+      <div class="field" id="category-field">
+        <label>Category</label>
+        <select id="modal-category"></select>
+      </div>
+      <div class="field" id="transfer-field" style="display:none">
+        <label>Recipient (Username or Account ID)</label>
+        <input type="text" id="modal-recipient" placeholder="@username or NEO-XXXXXX"/>
+      </div>
+      <div class="err" id="modal-err"></div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-confirm" onclick="confirmAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
